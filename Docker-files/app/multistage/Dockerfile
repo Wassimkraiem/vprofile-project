@@ -4,13 +4,11 @@ FROM openjdk:11 AS BUILD_IMAGE
 # Install necessary packages
 RUN apt update && apt install -y maven openssh-client
 
-# Add SSH key and known_hosts
 # Copy the SSH private key and set permissions
-# Make sure you add these files to the Docker build context
 COPY id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 
-# Add known hosts (for GitHub, for example)
+# Copy the known_hosts file into the container
 COPY known_hosts /root/.ssh/known_hosts
 
 # Clone the repository using SSH
