@@ -1,13 +1,32 @@
+# Stage 1: Build Stage
 FROM openjdk:11 AS BUILD_IMAGE
-RUN apt update && apt install maven -y
-RUN git clone https://github.com/devopshydclub/vprofile-project.git
+
+# Install necessary packages
+RUN apt update && apt install -y maven openssh-client
+
+# Add SSH key and known_hosts
+# Copy the SSH private key and set permissions
+# Make sure you add these files to the Docker build context
+COPY id_rsa /root/.ssh/id_rsa
+RUN chmod 600 /root/.ssh/id_rsa
+
+# Add known hosts (for GitHub, for example)
+COPY known_hosts /root/.ssh/known_hosts
+
+# Clone the repository using SSH
+RUN git clone git@github.com:devopshydclub/vprofile-project.git
 RUN cd vprofile-project && git checkout docker && mvn install
 
+# Stage 2: Application Image
 FROM tomcat:9-jre11
 
+# Clean the webapps directory
 RUN rm -rf /usr/local/tomcat/webapps/*
 
+# Copy the built WAR file from the build stage
 COPY --from=BUILD_IMAGE vprofile-project/target/vprofile-v2.war /usr/local/tomcat/webapps/ROOT.war
 
+# Expose port 8080 and run Tomcat
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
+
